@@ -1,0 +1,13 @@
+[package]
+name = "ac-expander-rs"
+version = "0.1.0"
+edition = "2024"
+description = "A Rust tool to expand and format Rust code files."
+authors = ["terry_u16"]
+
+[dependencies]
+anyhow = "1.0.98"
+arboard = "3.6.0"
+clap = { version = "4.5.41", features = ["derive"] }
+regex = "1.0"
+tempfile = "3.20.0"
