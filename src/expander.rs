@@ -18,7 +18,7 @@ pub(super) fn expand(path: &PathBuf, base_dir: &PathBuf, content: &mut String) -
             let module_path = base_dir.join(format!("{module_name}.rs"));
             let base_dir = base_dir.join(module_name);
 
-            content.push_str(&line[..line.len() - 1]);
+            content.push_str(&line.replace(";", ""));
             content.push_str(" {\n");
             expand(&module_path, &base_dir, content)?;
             content.push_str("}\n");
