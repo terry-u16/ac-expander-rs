@@ -10,7 +10,7 @@ use tempfile::NamedTempFile;
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    /// ルートとなるRustファイルのパス
+    /// Input file to expand and format
     #[arg(value_name = "FILE")]
     input: PathBuf,
 }
@@ -75,7 +75,4 @@ fn copy_to_clipboard(content: String) {
     let mut clipboard = Clipboard::new().unwrap();
     clipboard.set_text(content).unwrap();
     println!("Content copied to clipboard.");
-
-    // suppress warning message
-    std::thread::sleep(std::time::Duration::from_millis(100));
 }
