@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 use regex::Regex;
 use std::{
     fs::File,
@@ -8,8 +8,9 @@ use std::{
 
 pub(super) fn expand(path: &PathBuf, base_dir: &PathBuf, content: &mut String) -> Result<()> {
     let regex = Regex::new(r"mod\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*;\s*$").unwrap();
+    let file = File::open(path).context(format!("Failed to open file '{}'", path.display()))?;
 
-    for line in BufReader::new(File::open(path)?).lines() {
+    for line in BufReader::new(file).lines() {
         let line = line?;
 
         if let Some(caps) = regex.captures(&line) {
