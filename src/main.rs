@@ -1,7 +1,6 @@
 mod expander;
 
-use anyhow::{Result, ensure};
-use arboard::Clipboard;
+use anyhow::{Context, Result, ensure};
 use clap::Parser;
 use std::io::{Read as _, Write as _};
 use std::path::{Path, PathBuf};
@@ -13,6 +12,10 @@ struct Args {
     /// Input file to expand and format
     #[arg(value_name = "FILE")]
     input: PathBuf,
+
+    /// Output file to write the formatted content
+    #[arg(short, long, value_name = "OUTPUT")]
+    output: Option<PathBuf>,
 }
 
 fn main() -> Result<()> {
@@ -26,7 +29,7 @@ fn main() -> Result<()> {
     format_all(&args.input)?;
     let content = expand_content(&args.input)?;
     let content = format_content(content)?;
-    copy_to_clipboard(content);
+    output_content(args.output.as_ref(), content)?;
 
     Ok(())
 }
@@ -71,8 +74,18 @@ fn format_content(content: String) -> Result<String> {
     Ok(content)
 }
 
-fn copy_to_clipboard(content: String) {
-    let mut clipboard = Clipboard::new().unwrap();
-    clipboard.set_text(content).unwrap();
-    println!("Content copied to clipboard.");
+fn output_content(output: Option<&PathBuf>, content: String) -> Result<()> {
+    match output {
+        Some(path) => {
+            let mut file = std::fs::File::create(path).context("Failed to create output file")?;
+            file.write_all(content.as_bytes())
+                .context("Failed to write to output file")?;
+            println!("Content written to '{}'", path.display());
+        }
+        None => {
+            println!("{}", content);
+        }
+    }
+
+    Ok(())
 }
