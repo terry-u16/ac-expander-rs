@@ -26,23 +26,34 @@ fn main() -> Result<()> {
         std::process::exit(1);
     }
 
-    format_all(&args.input)?;
+    let manifest_path = find_manifest_path(&args.input)?;
+
+    format_all(&args.input, &manifest_path)?;
     let content = expand_content(&args.input)?;
-    let content = format_content(content)?;
+    let content = format_content(content, &manifest_path)?;
     output_content(args.output.as_ref(), content)?;
 
     Ok(())
 }
 
-fn format_all(input: &PathBuf) -> Result<()> {
-    let status = std::process::Command::new("rustfmt")
-        .arg(input)
-        .status()
-        .expect("Failed to format files");
+fn find_manifest_path(input: &Path) -> Result<PathBuf> {
+    let dir = input.parent().unwrap_or_else(|| Path::new("."));
+    let mut dir = std::fs::canonicalize(dir).context("Failed to resolve input directory")?;
 
-    ensure!(status.success(), "Failed to format files");
+    loop {
+        let manifest_path = dir.join("Cargo.toml");
+        if manifest_path.exists() {
+            return Ok(manifest_path);
+        }
 
-    Ok(())
+        if !dir.pop() {
+            anyhow::bail!("Failed to find Cargo.toml for '{}'", input.display());
+        }
+    }
+}
+
+fn format_all(input: &PathBuf, manifest_path: &Path) -> Result<()> {
+    format_file(input, manifest_path, "Failed to format files")
 }
 
 fn expand_content(input: &PathBuf) -> Result<String> {
@@ -56,22 +67,36 @@ fn expand_content(input: &PathBuf) -> Result<String> {
     Ok(content)
 }
 
-fn format_content(content: String) -> Result<String> {
+fn format_content(content: String, manifest_path: &Path) -> Result<String> {
     let mut tempfile = NamedTempFile::new()?;
     tempfile.write_all(content.as_bytes())?;
 
-    let status = std::process::Command::new("rustfmt")
-        .arg(tempfile.path())
-        .status()
-        .expect("Failed to format the output file");
-
-    ensure!(status.success(), "Failed to format the output file");
+    format_file(
+        tempfile.path(),
+        manifest_path,
+        "Failed to format the output file",
+    )?;
 
     let mut tempfile = tempfile.reopen()?;
     let mut content = String::new();
     tempfile.read_to_string(&mut content)?;
 
     Ok(content)
+}
+
+fn format_file(path: &Path, manifest_path: &Path, message: &str) -> Result<()> {
+    let status = std::process::Command::new("cargo")
+        .arg("fmt")
+        .arg("--manifest-path")
+        .arg(manifest_path)
+        .arg("--")
+        .arg(path)
+        .status()
+        .context("Failed to run cargo fmt")?;
+
+    ensure!(status.success(), "{message}");
+
+    Ok(())
 }
 
 fn output_content(output: Option<&PathBuf>, content: String) -> Result<()> {
