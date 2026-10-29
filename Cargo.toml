@@ -10,9 +10,9 @@ name = "acxp"
 path = "src/main.rs"
 
 [dependencies]
-anyhow = "1.0.98"
-clap = { version = "4.5.41", features = ["derive"] }
-regex = "1.0"
-tempfile = "3.20.0"
-proc-macro2 = { version = "1.0", features = ["span-locations"] }
-syn = { version = "2.0", features = ["full", "visit"] }
+anyhow = "1.0.104"
+clap = { version = "4.6.7", features = ["derive"] }
+regex = "1.13.1"
+tempfile = "3.27.0"
+proc-macro2 = { version = "1.0.107", features = ["span-locations"] }
+syn = { version = "3.0.9", features = ["full", "visit"] }
